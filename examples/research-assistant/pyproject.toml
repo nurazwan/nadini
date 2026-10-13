@@ -1,0 +1,50 @@
+[project]
+name = "research-assistant"
+version = "0.1.0"
+description = "Answers questions by searching Wikipedia and doing exact arithmetic, citing its sources."
+readme = "README.md"
+requires-python = ">=3.14"
+# Dependencies are added by `scripts/deps.sh` (latest versions, locked in uv.lock).
+dependencies = [
+    "a2a-sdk[http-server]>=1.2.2",
+    "httpx>=0.28.1",
+    "langchain>=1.4.4",
+    "langchain-openai>=1.7.0",
+    "langfuse>=4.17.0",
+    "langgraph>=1.2.14",
+    "mcp>=2.3.0",
+    "openinference-instrumentation-langchain>=0.1.79",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.1",
+    "opentelemetry-instrumentation-asgi>=0.66b1",
+    "opentelemetry-instrumentation-logging>=0.66b1",
+    "opentelemetry-sdk>=1.45.1",
+    "pydantic-settings>=2.15.0",
+    "sse-starlette>=3.5.0",
+    "starlette>=1.7.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
+ignore = ["E501"]  # line length is handled by `ruff format`

@@ -1,0 +1,23 @@
+"""LangChain agent built with `create_agent` (model + tools loop).
+
+Customise behaviour with `middleware=[...]` (summarisation, human-in-the-loop,
+guardrails, ...) or `response_format=` for structured output.
+"""
+
+from langchain.agents import create_agent
+from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.graph.state import CompiledStateGraph
+
+from agent import llm
+from agent.prompts import SYSTEM_PROMPT
+from agent.tools import TOOLS
+
+
+def build_agent(checkpointer: BaseCheckpointSaver | None = None) -> CompiledStateGraph:
+    return create_agent(
+        llm.get_llm(),
+        TOOLS,
+        system_prompt=SYSTEM_PROMPT,
+        checkpointer=checkpointer,
+        name="{{ project_slug }}",
+    )

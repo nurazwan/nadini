@@ -1,0 +1,118 @@
+# Nadini — Copier template: AI agent service (LangGraph / LangChain) exposed over A2A + MCP.
+# Usage: uvx copier copy --trust <this-repo> <destination>
+_min_copier_version: "9.0.0"
+_subdirectory: template
+_answers_file: .copier-answers.yml
+_envops:
+  keep_trailing_newline: true
+
+_message_before_copy: |
+  Creating an agent service. All dependency versions are resolved to the
+  latest releases at generation time (via `uv add`) and locked in uv.lock.
+
+_message_after_copy: |
+  Done! Next steps:
+
+    cd {{ _copier_conf.dst_path }}
+    cp .env.example .env        # add your OPENAI_API_KEY
+    make dev                    # http://localhost:{{ port }}/dev-ui
+  {%- if not install_deps %}
+
+  Dependencies were NOT installed. Run `make deps` to resolve and lock them.
+  {%- endif %}
+
+  Read README.md for A2A / MCP / observability details.
+
+# --------------------------------------------------------------------------- #
+# Questions
+# --------------------------------------------------------------------------- #
+project_name:
+  type: str
+  help: Human-readable agent name (shown in the A2A agent card and MCP server info)
+  default: My Agent
+  validator: "{% if not project_name.strip() %}Required{% endif %}"
+
+project_slug:
+  type: str
+  help: Package / image / service name
+  default: "{{ project_name | lower | replace(' ', '-') | replace('_', '-') }}"
+  validator: >-
+    {% if not (project_slug | regex_search('^[a-z][a-z0-9-]*$')) %}
+    Lowercase letters, digits and dashes only, starting with a letter
+    {% endif %}
+
+description:
+  type: str
+  help: One-line description of what the agent does
+  default: A helpful AI agent.
+
+framework:
+  type: str
+  help: Which framework should the agent logic use?
+  choices:
+    LangGraph (explicit StateGraph - full control over nodes and edges): langgraph
+    LangChain (create_agent - high-level agent loop): langchain
+  default: langgraph
+
+checkpointer:
+  type: str
+  help: Where should conversation memory (keyed by A2A contextId / MCP context_id) live?
+  choices:
+    In-memory (lost on restart - good for dev): memory
+    PostgreSQL (persistent; adds a postgres service to compose): postgres
+  default: memory
+
+enable_langfuse:
+  type: bool
+  help: Send LLM traces to Langfuse (in addition to OpenTelemetry/Grafana)?
+  default: true
+
+enable_devui:
+  type: bool
+  help: "Include the dev chat UI (ADK-style: sessions, events, state, graph, traces) at /dev-ui?"
+  default: true
+
+enable_auth:
+  type: bool
+  help: Protect A2A / MCP / dev API endpoints with a bearer token (AUTH_TOKEN)?
+  default: false
+
+python_version:
+  type: str
+  help: Python version for the project and Docker image
+  default: "3.14"
+  validator: >-
+    {% if not (python_version | regex_search('^3\.[0-9]+$')) %}Use the form 3.X{% endif %}
+
+port:
+  type: int
+  help: HTTP port the service listens on
+  default: 8000
+
+author_name:
+  type: str
+  help: Author name
+  default: ""
+
+author_email:
+  type: str
+  help: Author email
+  default: ""
+
+include_ci:
+  type: bool
+  help: Add a GitHub Actions workflow (lint, test, docker build)?
+  default: true
+
+install_deps:
+  type: bool
+  help: Resolve the latest dependency versions now with `uv add` (needs network)?
+  default: true
+
+# --------------------------------------------------------------------------- #
+# Post-generation tasks — dependency names only, never versions.
+# --------------------------------------------------------------------------- #
+_tasks:
+  - command: sh scripts/deps.sh
+    when: "{{ install_deps }}"
+  - command: "[ -d .git ] || git init -q"

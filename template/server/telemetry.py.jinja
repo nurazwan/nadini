@@ -1,0 +1,150 @@
+"""OpenTelemetry setup: traces, metrics and logs over OTLP (-> Grafana Alloy / LGTM).
+
+Configured entirely through standard env vars, e.g.
+    OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    OTEL_SERVICE_NAME=my-agent
+    OTEL_SDK_DISABLED=true          # turn everything off
+
+LangChain / LangGraph runs are traced with OpenInference.
+{%- if enable_langfuse %} Langfuse attaches to the
+same TracerProvider and exports only LLM-related spans, so Grafana and Langfuse
+share trace ids.
+{%- endif %}
+Hide prompt/response content (PII) with OPENINFERENCE_HIDE_INPUTS=true /
+OPENINFERENCE_HIDE_OUTPUTS=true.
+"""
+
+import logging
+import os
+
+from opentelemetry import _logs, metrics, trace
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from starlette.applications import Starlette
+from starlette.routing import Match
+
+from server.config import ServerSettings
+
+log = logging.getLogger(__name__)
+
+_providers: list = []
+_configured = False
+
+
+def setup(settings: ServerSettings) -> None:
+    """Configure telemetry once per process (safe to call repeatedly)."""
+    global _configured
+    if _configured:
+        return
+    _configured = True
+    logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+    if not settings.otel_enabled or os.getenv("OTEL_SDK_DISABLED", "").lower() == "true":
+        log.info("OpenTelemetry disabled")
+        _setup_langfuse(None, settings)
+        return
+
+    resource = Resource.create({SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", "{{ project_slug }}")})
+
+    tracer_provider = TracerProvider(resource=resource)
+    tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+    trace.set_tracer_provider(tracer_provider)
+
+    meter_provider = MeterProvider(
+        resource=resource, metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())]
+    )
+    metrics.set_meter_provider(meter_provider)
+
+    logger_provider = LoggerProvider(resource=resource)
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter()))
+    _logs.set_logger_provider(logger_provider)
+    # Ships stdlib logging to OTLP and injects trace/span ids into log records.
+    LoggingInstrumentor().instrument(set_logging_format=True)
+
+    _providers.extend([tracer_provider, meter_provider, logger_provider])
+
+    _setup_langfuse(tracer_provider, settings)
+
+    from openinference.instrumentation.langchain import LangChainInstrumentor
+
+    LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
+    log.info(
+        "OpenTelemetry enabled (OTLP endpoint: %s)",
+        os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318"),
+    )
+
+
+def _setup_langfuse(tracer_provider: TracerProvider | None, settings: ServerSettings) -> None:
+{%- if enable_langfuse %}
+    if not settings.langfuse_enabled or not os.getenv("LANGFUSE_PUBLIC_KEY"):
+        log.info("Langfuse disabled (set LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY to enable)")
+        return
+    from langfuse import Langfuse
+
+    # Shares our TracerProvider; Langfuse's own filter exports only LLM/GenAI spans.
+    client = Langfuse(tracer_provider=tracer_provider) if tracer_provider else Langfuse()
+    _providers.append(client)
+    log.info("Langfuse enabled")
+{%- else %}
+    return
+{%- endif %}
+
+
+def instrument_app(app: Starlette) -> None:
+    """HTTP server spans + metrics. Skips per-chunk send/receive spans (SSE streams
+    would otherwise emit one span per token) and the health probes."""
+    from opentelemetry.instrumentation.asgi import OpenTelemetryMiddleware
+
+    def span_details(scope: dict) -> tuple[str, dict]:
+        # Name spans by route template ("/dev/api/sessions/{sid}"), not raw path.
+        for route in app.routes:
+            match, _ = route.matches(scope)
+            if match == Match.FULL:
+                return f"{scope.get('method', 'HTTP')} {route.path}", {}
+        return scope.get("method", "HTTP"), {}
+
+    app.add_middleware(
+        OpenTelemetryMiddleware,
+        excluded_urls="healthz,readyz",
+        exclude_spans=["receive", "send"],
+        default_span_details=span_details,
+    )
+
+
+def trace_links(trace_id: str, settings: ServerSettings) -> dict[str, str]:
+    """Deep links for the dev UI's Trace tab."""
+    links = {"grafana": settings.trace_url_template.replace("{trace_id}", trace_id)}
+{%- if enable_langfuse %}
+    for p in _providers:
+        if hasattr(p, "get_trace_url"):
+            try:
+                if url := p.get_trace_url(trace_id=trace_id):
+                    links["langfuse"] = url
+            except Exception:
+                log.debug("could not build Langfuse trace url", exc_info=True)
+{%- endif %}
+    return links
+
+
+def current_trace_id() -> str | None:
+    ctx = trace.get_current_span().get_span_context()
+    return format(ctx.trace_id, "032x") if ctx.is_valid else None
+
+
+def shutdown() -> None:
+    global _configured
+    _configured = False
+    for p in reversed(_providers):
+        try:
+            p.shutdown()
+        except Exception:
+            log.debug("telemetry shutdown failed", exc_info=True)
+    _providers.clear()

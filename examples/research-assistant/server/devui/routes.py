@@ -1,0 +1,86 @@
+"""Dev UI: static page at /dev-ui and its JSON/SSE API under /dev/api.
+
+Enabled only when DEV_UI_ENABLED=true. Do not expose in production - it shows
+full conversation state.
+"""
+
+import json
+from pathlib import Path
+
+from opentelemetry import trace
+from sse_starlette import EventSourceResponse
+from starlette.requests import Request
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse
+from starlette.routing import Mount, Route
+from starlette.staticfiles import StaticFiles
+
+from agent import main as agent_main
+from agent.settings import get_settings as get_agent_settings
+from server import telemetry
+from server.config import ServerSettings
+
+STATIC = Path(__file__).parent / "static"
+tracer = trace.get_tracer(__name__)
+
+
+def build_routes(settings: ServerSettings) -> list[Route | Mount]:
+    async def index(_: Request) -> FileResponse:
+        return FileResponse(STATIC / "index.html")
+
+    async def info(_: Request) -> JSONResponse:
+        return JSONResponse(
+            {
+                "name": get_agent_settings().agent_name,
+                "description": settings.agent_description,
+                "framework": "langgraph",
+                "model": get_agent_settings().llm_model,
+                "auth_required": bool(settings.auth_token),
+                "a2a_card": "/.well-known/agent-card.json",
+                "mcp_endpoint": "/mcp",
+            }
+        )
+
+    async def sessions(_: Request) -> JSONResponse:
+        return JSONResponse(await agent_main.list_sessions())
+
+    async def session_state(request: Request) -> JSONResponse:
+        return JSONResponse(await agent_main.get_state(request.path_params["sid"]))
+
+    async def delete_session(request: Request) -> JSONResponse:
+        await agent_main.delete_session(request.path_params["sid"])
+        return JSONResponse({"deleted": request.path_params["sid"]})
+
+    async def graph(_: Request) -> JSONResponse:
+        return JSONResponse({"mermaid": agent_main.graph_mermaid()})
+
+    async def run_sse(request: Request) -> EventSourceResponse:
+        body = await request.json()
+        text, context_id = body.get("text", ""), body.get("context_id")
+
+        async def stream():
+            with tracer.start_as_current_span("dev_ui.turn") as span:
+                span.set_attribute("session.id", context_id or "")
+                trace_id = telemetry.current_trace_id()
+                if trace_id:
+                    links = telemetry.trace_links(trace_id, settings)
+                    meta = {"trace_id": trace_id, "links": links}
+                    yield {"event": "meta", "data": json.dumps(meta)}
+                try:
+                    async for event in agent_main.stream_events(text, context_id):
+                        yield {"event": "agent", "data": json.dumps(event, default=str)}
+                except Exception:
+                    return  # the `error` event was already sent by stream_events
+
+        return EventSourceResponse(stream(), ping=15)
+
+    return [
+        Route("/dev-ui", lambda _: RedirectResponse("/dev-ui/")),
+        Route("/dev-ui/", index),
+        Mount("/dev-ui/static", app=StaticFiles(directory=STATIC), name="devui-static"),
+        Route("/dev/api/info", info),
+        Route("/dev/api/sessions", sessions),
+        Route("/dev/api/sessions/{sid}", delete_session, methods=["DELETE"]),
+        Route("/dev/api/sessions/{sid}/state", session_state),
+        Route("/dev/api/graph", graph),
+        Route("/dev/api/run_sse", run_sse, methods=["POST"]),
+    ]

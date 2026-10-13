@@ -1,0 +1,31 @@
+[project]
+name = "{{ project_slug }}"
+version = "0.1.0"
+description = {{ description | tojson }}
+readme = "README.md"
+requires-python = ">={{ python_version }}"
+{%- if author_name or author_email %}
+authors = [{ name = {{ author_name | tojson }}{% if author_email %}, email = {{ author_email | tojson }}{% endif %} }]
+{%- endif %}
+# Dependencies are added by `scripts/deps.sh` (latest versions, locked in uv.lock).
+dependencies = []
+
+[dependency-groups]
+dev = []
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py{{ python_version | replace('.', '') }}"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
+ignore = ["E501"]  # line length is handled by `ruff format`

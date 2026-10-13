@@ -1,0 +1,23 @@
+# Local stack: the agent + Grafana LGTM (Loki, Grafana, Tempo, Mimir + OTLP collector).
+#   docker compose up --build
+#   Agent:   http://localhost:8000   (dev UI: /dev-ui)
+#   Grafana: http://localhost:3000        (Explore -> Tempo / Loki / Prometheus)
+services:
+  agent:
+    build: .
+    ports: ["8000:8000"]
+    env_file: .env
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4318
+      OTEL_SERVICE_NAME: research-assistant
+      DEV_UI_ENABLED: "true"
+    depends_on:
+      lgtm:
+        condition: service_started
+
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"   # Grafana
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP

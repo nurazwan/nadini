@@ -1,0 +1,17 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_src_path: .
+author_email: ''
+author_name: ''
+checkpointer: memory
+description: Answers questions by searching Wikipedia and doing exact arithmetic,
+    citing its sources.
+enable_auth: false
+enable_devui: true
+enable_langfuse: true
+framework: langgraph
+include_ci: false
+install_deps: true
+port: 8000
+project_name: Research Assistant
+project_slug: research-assistant
+python_version: '3.14'

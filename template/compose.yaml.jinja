@@ -1,0 +1,48 @@
+# Local stack: the agent + Grafana LGTM (Loki, Grafana, Tempo, Mimir + OTLP collector).
+#   docker compose up --build
+#   Agent:   http://localhost:{{ port }}   (dev UI: /dev-ui)
+#   Grafana: http://localhost:3000        (Explore -> Tempo / Loki / Prometheus)
+services:
+  agent:
+    build: .
+    ports: ["{{ port }}:{{ port }}"]
+    env_file: .env
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4318
+      OTEL_SERVICE_NAME: {{ project_slug }}
+      DEV_UI_ENABLED: "true"
+{%- if checkpointer == 'postgres' %}
+      DATABASE_URL: postgresql://agent:agent@postgres:5432/agent
+{%- endif %}
+    depends_on:
+      lgtm:
+        condition: service_started
+{%- if checkpointer == 'postgres' %}
+      postgres:
+        condition: service_healthy
+{%- endif %}
+
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"   # Grafana
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+{%- if checkpointer == 'postgres' %}
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: agent
+      POSTGRES_DB: agent
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+{%- endif %}

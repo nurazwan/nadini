@@ -1,0 +1,14 @@
+# Regenerate the bare example with:
+#   uvx copier copy --trust --data-file examples/research-assistant.answers.yml . examples/research-assistant
+project_name: Research Assistant
+project_slug: research-assistant
+description: Answers questions by searching Wikipedia and doing exact arithmetic, citing its sources.
+framework: langgraph
+checkpointer: memory
+enable_langfuse: true
+enable_devui: true
+enable_auth: false
+python_version: "3.14"
+port: 8000
+include_ci: false
+install_deps: true

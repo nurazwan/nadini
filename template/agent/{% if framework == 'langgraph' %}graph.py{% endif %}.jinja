@@ -1,0 +1,36 @@
+"""LangGraph agent: an explicit StateGraph you can extend with your own nodes/edges.
+
+Flow: START -> agent --(tool calls?)--> tools -> agent ... -> END
+"""
+
+from langchain_core.messages import SystemMessage
+from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.graph import START, MessagesState, StateGraph
+from langgraph.graph.state import CompiledStateGraph
+from langgraph.prebuilt import ToolNode, tools_condition
+
+from agent import llm
+from agent.prompts import SYSTEM_PROMPT
+from agent.tools import TOOLS
+
+
+class State(MessagesState):
+    """Graph state. Add your own fields here (they show up in the dev UI State tab)."""
+
+
+def build_agent(checkpointer: BaseCheckpointSaver | None = None) -> CompiledStateGraph:
+    model = llm.get_llm().bind_tools(TOOLS)
+
+    async def call_model(state: State, config: RunnableConfig) -> dict:
+        messages = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
+        response = await model.ainvoke(messages, config)
+        return {"messages": [response]}
+
+    graph = StateGraph(State)
+    graph.add_node("agent", call_model)
+    graph.add_node("tools", ToolNode(TOOLS))
+    graph.add_edge(START, "agent")
+    graph.add_conditional_edges("agent", tools_condition)
+    graph.add_edge("tools", "agent")
+    return graph.compile(checkpointer=checkpointer, name="{{ project_slug }}")

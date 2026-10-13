@@ -1,0 +1,24 @@
+"""Conversation memory (LangGraph checkpointer), keyed by thread_id = context id."""
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from langgraph.checkpoint.base import BaseCheckpointSaver
+{%- if checkpointer == 'postgres' %}
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+from agent.settings import get_settings
+{%- else %}
+from langgraph.checkpoint.memory import InMemorySaver
+{%- endif %}
+
+
+@asynccontextmanager
+async def open_checkpointer() -> AsyncIterator[BaseCheckpointSaver]:
+{%- if checkpointer == 'postgres' %}
+    async with AsyncPostgresSaver.from_conn_string(get_settings().database_url) as saver:
+        await saver.setup()
+        yield saver
+{%- else %}
+    yield InMemorySaver()
+{%- endif %}

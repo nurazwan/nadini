@@ -1,0 +1,54 @@
+# Renders Nadini in several configurations and runs each generated
+# project's lint + tests, plus the committed example.
+name: template-ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"   # weekly: catch breaking changes in the latest SDK releases
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { framework: langgraph, checkpointer: memory,   langfuse: true,  devui: true,  auth: false }
+          - { framework: langchain, checkpointer: memory,   langfuse: false, devui: true,  auth: true }
+          - { framework: langgraph, checkpointer: postgres, langfuse: true,  devui: false, auth: false }
+          - { framework: langchain, checkpointer: postgres, langfuse: false, devui: false, auth: true }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - name: Render
+        run: |
+          git config --global user.email ci@example.com && git config --global user.name ci
+          uvx copier copy --trust --defaults --vcs-ref HEAD . /tmp/agent \
+            -d project_name="CI Agent" \
+            -d framework=${{ matrix.framework }} \
+            -d checkpointer=${{ matrix.checkpointer }} \
+            -d enable_langfuse=${{ matrix.langfuse }} \
+            -d enable_devui=${{ matrix.devui }} \
+            -d enable_auth=${{ matrix.auth }}
+      - name: Lint + test
+        working-directory: /tmp/agent
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run pytest -q
+      - name: Docker build
+        working-directory: /tmp/agent
+        run: docker build -t ci-agent .
+
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - working-directory: examples/research-assistant
+        run: |
+          uv sync --locked
+          uv run ruff check .
+          uv run pytest -q

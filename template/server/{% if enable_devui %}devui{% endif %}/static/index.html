@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Dev UI</title>
+  <link rel="stylesheet" href="/dev-ui/static/app.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sessions ---------------------------------------------------------- -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-name" id="agent-name">Agent</div>
+        <div class="brand-meta" id="agent-meta"></div>
+      </div>
+      <button class="btn primary" id="new-session">+ New session</button>
+      <div class="section-label">Sessions</div>
+      <ul class="sessions" id="sessions"></ul>
+      <div class="sidebar-footer">
+        <div id="auth-box" hidden>
+          <label class="section-label" for="auth-token">Bearer token</label>
+          <input id="auth-token" type="password" placeholder="AUTH_TOKEN" autocomplete="off">
+        </div>
+        <div class="endpoints" id="endpoints"></div>
+      </div>
+    </aside>
+
+    <!-- Chat -------------------------------------------------------------- -->
+    <main class="chat">
+      <header class="chat-header">
+        <button class="icon-btn mobile-only" id="toggle-sidebar" aria-label="Sessions">☰</button>
+        <div class="session-title">Session <code id="session-id">—</code></div>
+        <button class="icon-btn mobile-only" id="toggle-inspector" aria-label="Inspector">⧉</button>
+      </header>
+      <div class="messages" id="messages">
+        <div class="empty" id="empty">
+          <h2>Start a conversation</h2>
+          <p>Messages run through <code>agent.main.stream_events</code> — the same code path A2A and MCP use.</p>
+        </div>
+      </div>
+      <form class="composer" id="composer">
+        <textarea id="input" rows="1" placeholder="Message the agent… (Shift+Enter for newline)"></textarea>
+        <button class="btn primary" id="send" type="submit">Send</button>
+      </form>
+    </main>
+
+    <!-- Inspector --------------------------------------------------------- -->
+    <aside class="inspector" id="inspector">
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-tab="events">Events</button>
+        <button class="tab" data-tab="state">State</button>
+        <button class="tab" data-tab="graph">Graph</button>
+        <button class="tab" data-tab="trace">Trace</button>
+      </nav>
+      <section class="panel active" id="panel-events">
+        <div class="panel-hint" id="events-hint">Send a message, then click an agent reply to inspect its turn.</div>
+        <ol class="events" id="events"></ol>
+      </section>
+      <section class="panel" id="panel-state">
+        <div class="panel-actions"><button class="btn small" id="refresh-state">Refresh</button></div>
+        <pre class="json" id="state"></pre>
+      </section>
+      <section class="panel" id="panel-graph">
+        <div class="graph" id="graph"></div>
+        <details><summary>Mermaid source</summary><pre class="json" id="graph-src"></pre></details>
+      </section>
+      <section class="panel" id="panel-trace">
+        <div id="trace"><div class="panel-hint">Trace links appear after a turn runs (requires OpenTelemetry).</div></div>
+      </section>
+    </aside>
+  </div>
+  <script type="module" src="/dev-ui/static/app.js"></script>
+</body>
+</html>
