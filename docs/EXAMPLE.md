@@ -23,7 +23,7 @@ enable_devui: true
 uvx copier copy --trust --data-file examples/research-assistant.answers.yml . examples/research-assistant
 ```
 
-Copier renders the files, then `scripts/deps.sh` runs `uv add` for every dependency **by name**. The latest versions get locked, e.g.:
+Copier renders the files, then `scripts/deps.py` runs `uv add` for every dependency **by name**. The latest versions get locked, e.g.:
 
 ```toml
 dependencies = [

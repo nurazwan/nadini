@@ -111,7 +111,7 @@ my-agent/
 │   ├── auth.py             bearer-token middleware
 │   └── config.py           server env config
 ├── tests/                  fake-LLM tests
-├── scripts/deps.sh         dependency names (no versions)
+├── scripts/deps.py         dependency names (no versions)
 ├── .github/workflows/      ci.yml (when ci ≠ none)
 └── Dockerfile  compose.yaml  Makefile  .env.example  uv.lock
 ```
@@ -195,7 +195,7 @@ Add the repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (a Docker 
 | Command | Effect |
 | --- | --- |
 | `make upgrade` | Bump every dependency to its latest release, then run `make test` |
-| `make deps` | Re-resolve from the name list in `scripts/deps.sh` |
+| `make deps` | Re-resolve from the name list in `scripts/deps.py` |
 | `uvx copier update --trust` | Pull template improvements into your project. It's a 3-way merge, so your `agent/` changes are kept. Commit your project first |
 
 ## Troubleshooting

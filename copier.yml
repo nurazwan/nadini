@@ -159,6 +159,7 @@ install_deps:
 # Post-generation tasks — dependency names only, never versions.
 # --------------------------------------------------------------------------- #
 _tasks:
-  - command: sh scripts/deps.sh
+  # Argument lists, not shell strings, so they run the same on Windows.
+  - command: [uv, run, --no-project, scripts/deps.py]
     when: "{{ install_deps }}"
-  - command: "[ -d .git ] || git init -q"
+  - command: [git, init, -q]   # safe to re-run on an existing repo

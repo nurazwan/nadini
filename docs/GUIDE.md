@@ -79,7 +79,7 @@ uvx copier copy --trust --data-file answers.yml ./nadini my-agent
 
 ### How "never hardcode versions" works
 
-The template lists package **names only** (`scripts/deps.sh`). When you generate a project:
+The template lists package **names only** (`scripts/deps.py`). When you generate a project:
 
 1. `uv add <names>` resolves the **latest** release of each package.
 2. The versions are written as lower bounds in `pyproject.toml` (e.g. `mcp>=2.3.0`) and pinned exactly in `uv.lock`.
@@ -109,7 +109,7 @@ my-agent/
 │   ├── auth.py             optional bearer-token middleware
 │   └── config.py           server env config
 ├── tests/                  fake-LLM tests for agent, A2A, MCP, dev UI
-├── scripts/deps.sh         dependency names (no versions)
+├── scripts/deps.py         dependency names (no versions)
 ├── Dockerfile  compose.yaml  Makefile  .env.example
 ```
 
@@ -394,7 +394,7 @@ Add two repository secrets: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (a Docker
 | Command | Effect |
 | --- | --- |
 | `make upgrade` | Every dependency to its latest release (`uv lock --upgrade`); then run `make test` |
-| `make deps` | Re-resolve from the name list in `scripts/deps.sh` |
+| `make deps` | Re-resolve from the name list in `scripts/deps.py` |
 | `uvx copier update --trust` | Pull template improvements into your project (3-way merge; your `agent/` changes are kept, conflicts are marked). Needs the template to be a git repo with commits (tags recommended), and your project committed first |
 
 The template's CI renders every variant **weekly** against the latest SDK releases, so breaking upstream changes surface there first.

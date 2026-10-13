@@ -1,7 +1,7 @@
 .PHONY: deps upgrade dev run test lint fmt build up down
 
 deps:          ## resolve latest versions of all dependencies into uv.lock
-	sh scripts/deps.sh
+	uv run --no-project scripts/deps.py
 
 upgrade:       ## bump every locked dependency to its latest version
 	uv lock --upgrade && uv sync

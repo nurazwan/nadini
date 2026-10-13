@@ -7,7 +7,7 @@ requires-python = ">={{ python_version }}"
 {%- if author_name or author_email %}
 authors = [{ name = {{ author_name | tojson }}{% if author_email %}, email = {{ author_email | tojson }}{% endif %} }]
 {%- endif %}
-# Dependencies are added by `scripts/deps.sh` (latest versions, locked in uv.lock).
+# Dependencies are added by `scripts/deps.py` (latest versions, locked in uv.lock).
 dependencies = []
 
 [dependency-groups]

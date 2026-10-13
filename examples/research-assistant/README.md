@@ -81,7 +81,7 @@ The image runs as a non-root user, has a `HEALTHCHECK` on `/healthz`, and the de
 
 ## Dependencies
 
-No versions are hardcoded. `scripts/deps.sh` adds packages by name, so `uv` resolves the latest releases and locks them in `uv.lock`.
+No versions are hardcoded. `scripts/deps.py` adds packages by name, so `uv` resolves the latest releases and locks them in `uv.lock`.
 
 - `make upgrade` bumps every package to its latest release.
 - `make deps` re-runs the resolution from scratch.

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Answers questions by searching Wikipedia and doing exact arithmetic, citing its sources."
 readme = "README.md"
 requires-python = ">=3.14"
-# Dependencies are added by `scripts/deps.sh` (latest versions, locked in uv.lock).
+# Dependencies are added by `scripts/deps.py` (latest versions, locked in uv.lock).
 dependencies = [
     "a2a-sdk[http-server]>=1.2.2",
     "httpx>=0.28.1",
