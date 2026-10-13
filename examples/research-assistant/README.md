@@ -3,7 +3,7 @@
 Answers questions by searching Wikipedia and doing exact arithmetic, citing its sources.
 
 A **LangGraph** agent served over **A2A** and **MCP**, with OpenTelemetry + Langfuse tracing and a dev chat UI.
-Generated from [Nadini](https://github.com/nurazwan/nadini); run `uvx copier update --trust` to pull template improvements.
+Generated from [Nadini](https://github.com/nurazwan/nadini); run `uvx copier update --trust` to pull template improvements. See [Editing a generated project](https://github.com/nurazwan/nadini/blob/main/docs/EDITING.md) for what each file does and how to change it.
 
 ## Quickstart
 

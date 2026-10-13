@@ -140,6 +140,8 @@ The A2A adapter, the MCP adapter and the dev UI all consume this one stream.
 
 ## 4. Customise the agent
 
+For every generated file (what it does, whether to edit it) and more recipes, see [Editing a generated project](EDITING.md).
+
 ### Add a tool
 
 ```python

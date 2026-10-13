@@ -14,7 +14,7 @@ Nadini is an interactive [Copier](https://copier.readthedocs.io) template for AI
 
 All three entry points (A2A, MCP, dev UI) call **one** function contract in `agent/main.py`, so they always behave the same.
 
-📖 **[Usage guide](docs/GUIDE.md)** · 🧪 **[Worked example: Research Assistant](docs/EXAMPLE.md)**
+📖 **[Usage guide](docs/GUIDE.md)** · ✏️ **[Editing a generated project](docs/EDITING.md)** · 🧪 **[Worked example: Research Assistant](docs/EXAMPLE.md)**
 
 - [Features](#features)
 - [Quick start](#quick-start)
