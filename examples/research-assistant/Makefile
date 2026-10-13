@@ -7,10 +7,10 @@ upgrade:       ## bump every locked dependency to its latest version
 	uv lock --upgrade && uv sync
 
 dev:           ## run locally with auto-reload and the dev UI
-	DEV_UI_ENABLED=true uv run uvicorn server.app:app --reload --port 8000
+	DEV_UI_ENABLED=true uv run uvicorn server.app:app --reload --host 127.0.0.1 --port 8000
 
 run:           ## run locally like production
-	uv run uvicorn server.app:app --host 0.0.0.0 --port 8000
+	uv run uvicorn server.app:app --host 127.0.0.1 --port 8000
 
 test:
 	uv run pytest -q

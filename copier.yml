@@ -20,6 +20,11 @@ _message_after_copy: |
 
   Dependencies were NOT installed. Run `make deps` to resolve and lock them.
   {%- endif %}
+  {%- if ci == 'dockerhub' %}
+
+  CI pushes to Docker Hub: add the repository secrets DOCKERHUB_USERNAME and
+  DOCKERHUB_TOKEN (a Docker Hub access token with Read & Write scope).
+  {%- endif %}
 
   Read README.md for A2A / MCP / observability details.
 
@@ -89,6 +94,14 @@ port:
   help: HTTP port the service listens on
   default: 8000
 
+bind_host:
+  type: str
+  help: Address the service listens on (in Docker this sets the published port's address)
+  choices:
+    127.0.0.1 (this machine only - safer for dev): 127.0.0.1
+    0.0.0.0 (all interfaces - reachable from the network): 0.0.0.0
+  default: 127.0.0.1
+
 author_name:
   type: str
   help: Author name
@@ -99,10 +112,43 @@ author_email:
   help: Author email
   default: ""
 
-include_ci:
-  type: bool
-  help: Add a GitHub Actions workflow (lint, test, docker build)?
-  default: true
+ci:
+  type: str
+  help: GitHub Actions workflow?
+  choices:
+    None: none
+    Lint + test + docker build: test
+    Lint + test + multi-arch build & push to Docker Hub: dockerhub
+  default: test
+
+dockerhub_image:
+  type: str
+  help: Docker Hub repository to push to (namespace/name)
+  when: "{{ ci == 'dockerhub' }}"
+  default: "your-dockerhub-user/{{ project_slug }}"
+  validator: >-
+    {% if not (dockerhub_image | regex_search('^[a-z0-9]+([._-][a-z0-9]+)*/[a-z0-9]+([._-][a-z0-9]+)*$')) %}
+    Use the form namespace/name (lowercase)
+    {% endif %}
+
+docker_builder:
+  type: str
+  help: Where should CI build the amd64 + arm64 image?
+  when: "{{ ci == 'dockerhub' }}"
+  choices:
+    GitHub runner (buildx + QEMU emulation - free, slower arm64): runner
+    Docker Build Cloud (native amd64 + arm64 - needs a Build Cloud builder): cloud
+  default: runner
+
+build_cloud_builder:
+  type: str
+  help: Docker Build Cloud builder (ORG/NAME, see Docker Hub -> Build Cloud)
+  when: "{{ ci == 'dockerhub' and docker_builder == 'cloud' }}"
+  default: ""
+  validator: >-
+    {% if not (build_cloud_builder | regex_search('^[^/\\s]+/[^/\\s]+$')) %}
+    Use the form ORG/NAME
+    {% endif %}
 
 install_deps:
   type: bool

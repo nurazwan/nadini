@@ -1,7 +1,7 @@
 """ASGI app: A2A (JSON-RPC at /, card at /.well-known/agent-card.json), MCP (/mcp),
 health probes and the dev UI (/dev-ui).
 
-Run:  uvicorn server.app:app --host 0.0.0.0 --port 8000
+Run:  uvicorn server.app:app --host 127.0.0.1 --port 8000
 """
 
 from contextlib import asynccontextmanager

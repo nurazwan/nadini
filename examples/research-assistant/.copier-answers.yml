@@ -2,14 +2,15 @@
 _src_path: .
 author_email: ''
 author_name: ''
+bind_host: 127.0.0.1
 checkpointer: memory
+ci: none
 description: Answers questions by searching Wikipedia and doing exact arithmetic,
     citing its sources.
 enable_auth: false
 enable_devui: true
 enable_langfuse: true
 framework: langgraph
-include_ci: false
 install_deps: true
 port: 8000
 project_name: Research Assistant

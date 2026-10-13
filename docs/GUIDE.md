@@ -61,7 +61,11 @@ You'll be asked:
 | `enable_auth` | yes / no | Sets `AUTH_TOKEN` in `.env.example` (the bearer middleware is always present) |
 | `python_version` | e.g. `3.14` | `requires-python`, `.python-version` and the Docker base image |
 | `port` | e.g. `8000` | Listening port |
-| `include_ci` | yes / no | GitHub Actions: lint, test, docker build |
+| `bind_host` | `127.0.0.1` / `0.0.0.0` | Address `make dev` / `make run` listen on, and the address compose publishes ports on. The container itself always listens on `0.0.0.0` |
+| `ci` | `none` / `test` / `dockerhub` | GitHub Actions: nothing; lint + test + docker build; or lint + test + multi-arch build and push to Docker Hub |
+| `dockerhub_image` | e.g. `me/my-agent` | Docker Hub repository (asked when `ci=dockerhub`) |
+| `docker_builder` | `runner` / `cloud` | Build amd64 + arm64 on the GitHub runner (QEMU) or on Docker Build Cloud (asked when `ci=dockerhub`) |
+| `build_cloud_builder` | e.g. `myorg/default` | Docker Build Cloud builder (asked when `docker_builder=cloud`) |
 | `install_deps` | yes / no | Run `uv add` now. If no, run `make deps` later |
 
 Non-interactive (CI, scripts):
@@ -340,7 +344,7 @@ Set `OPENINFERENCE_HIDE_INPUTS=true` and `OPENINFERENCE_HIDE_OUTPUTS=true` to ke
 
 ```bash
 make build                                   # docker build -t my-agent:latest .
-docker run --env-file .env -p 8000:8000 my-agent:latest
+docker run --env-file .env -p 127.0.0.1:8000:8000 my-agent:latest   # drop 127.0.0.1: to expose on the network
 ```
 
 The image:
@@ -368,6 +372,23 @@ Set these in production:
 
 A2A task state uses an in-memory task store. For multi-replica deployments, either use sticky sessions or swap in `a2a-sdk`'s `DatabaseTaskStore`.
 
+### Publish to Docker Hub from CI
+
+With `ci=dockerhub`, `.github/workflows/ci.yml` runs lint + tests, then builds a `linux/amd64` + `linux/arm64` image and pushes it to `dockerhub_image`:
+
+| Trigger | Tags pushed |
+| --- | --- |
+| push to `main` | `latest`, `sha-<short sha>` |
+| tag `v1.2.3` | `1.2.3`, `1.2` |
+| pull request | none (build only) |
+
+Add two repository secrets: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (a Docker Hub access token with Read & Write scope).
+
+`docker_builder` picks where the image is built:
+
+- `runner`: buildx on the GitHub runner, with QEMU emulating arm64 and the GitHub Actions cache. Free, but arm64 builds are slow.
+- `cloud`: [Docker Build Cloud](https://docs.docker.com/build-cloud/) with native amd64 and arm64 builders. Create a builder in Docker Hub, then give its `ORG/NAME` as `build_cloud_builder`. The token's account needs access to it. Build Cloud needs a login even to build, so pull requests from forks (which get no secrets) fail at that step.
+
 ## 9. Keep it up to date
 
 | Command | Effect |
@@ -389,6 +410,7 @@ The template's CI renders every variant **weekly** against the latest SDK releas
 | No traces in Grafana | Check `OTEL_EXPORTER_OTLP_ENDPOINT` (HTTP port **4318**). The app logs "OpenTelemetry enabled" at startup |
 | Langfuse empty | Both keys must be set; check `LANGFUSE_BASE_URL` region; traces flush in batches (a few seconds) |
 | Model rejects `temperature` | Unset `LLM_TEMPERATURE` (some reasoning models only allow the default) |
+| Can't reach the agent from another machine | Generated with `bind_host=127.0.0.1`: change `--host` in the `Makefile` and the port mappings in `compose.yaml`, or regenerate with `0.0.0.0` |
 | `/dev-ui` is 404 | `DEV_UI_ENABLED=true` (and the project was generated with `enable_devui`) |
 | Generation failed at `uv add` | Re-run `make deps` in the project once the network is up |
 
@@ -401,6 +423,7 @@ The template's CI renders every variant **weekly** against the latest SDK releas
 | `OPENAI_BASE_URL` | OpenAI | Any OpenAI-compatible endpoint |
 | `LLM_TEMPERATURE` | model default | Sampling temperature |
 | `PORT` | 8000 | Listening port (Docker) |
+| `HOST` | `bind_host` | Bind address the MCP app is told about. `make dev` / `make run` pass `--host` directly |
 | `PUBLIC_URL` | `http://localhost:8000` | Advertised in the agent card |
 | `AUTH_TOKEN` | — | Bearer token for A2A/MCP/dev API |
 | `DEV_UI_ENABLED` | `false` | Enables `/dev-ui` |

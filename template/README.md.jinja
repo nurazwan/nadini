@@ -78,10 +78,31 @@ async with Client("http://localhost:{{ port }}/mcp") as client:
 
 ```bash
 make build                       # docker build -t {{ project_slug }}:latest .
-docker run --env-file .env -p {{ port }}:{{ port }} {{ project_slug }}:latest
+docker run --env-file .env -p {% if bind_host == '127.0.0.1' %}127.0.0.1:{% endif %}{{ port }}:{{ port }} {{ project_slug }}:latest
 ```
 
 The image runs as a non-root user, has a `HEALTHCHECK` on `/healthz`, and the dev UI is off (`DEV_UI_ENABLED=false`).
+{%- if ci == 'dockerhub' %}
+
+### Publishing to Docker Hub
+
+`.github/workflows/ci.yml` builds a `linux/amd64` + `linux/arm64` image {% if docker_builder == 'cloud' %}on Docker Build Cloud (`{{ build_cloud_builder }}`){% else %}on the GitHub runner (QEMU){% endif %} and pushes it to `{{ dockerhub_image }}`:
+
+| Trigger | Tags |
+| --- | --- |
+| push to `main` | `latest`, `sha-<short sha>` |
+| tag `v1.2.3` | `1.2.3`, `1.2` |
+| pull request | build only, no push |
+
+Add these repository secrets (Settings → Secrets and variables → Actions):
+
+- `DOCKERHUB_USERNAME`: your Docker Hub username
+- `DOCKERHUB_TOKEN`: a Docker Hub access token with Read & Write scope
+{%- if docker_builder == 'cloud' %}
+
+The token's account must have access to the Build Cloud builder `{{ build_cloud_builder }}`. Pull requests from forks get no secrets, so their build fails. That's expected.
+{%- endif %}
+{%- endif %}
 
 ## Dependencies
 

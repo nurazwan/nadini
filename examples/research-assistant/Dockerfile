@@ -26,6 +26,8 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PORT=8000 \
     DEV_UI_ENABLED=false
 USER app
+# Always 0.0.0.0 inside the container; restrict exposure where the port is published
+# (e.g. `-p 127.0.0.1:8000:8000`).
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD python -c "import os,urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ[\"PORT\"]}/healthz', timeout=4)"

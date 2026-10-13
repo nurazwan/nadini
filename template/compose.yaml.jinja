@@ -5,7 +5,7 @@
 services:
   agent:
     build: .
-    ports: ["{{ port }}:{{ port }}"]
+    ports: ["{% if bind_host == '127.0.0.1' %}127.0.0.1:{% endif %}{{ port }}:{{ port }}"]
     env_file: .env
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4318
@@ -25,9 +25,9 @@ services:
   lgtm:
     image: grafana/otel-lgtm:latest
     ports:
-      - "3000:3000"   # Grafana
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
+      - "{% if bind_host == '127.0.0.1' %}127.0.0.1:{% endif %}3000:3000"   # Grafana
+      - "{% if bind_host == '127.0.0.1' %}127.0.0.1:{% endif %}4317:4317"   # OTLP gRPC
+      - "{% if bind_host == '127.0.0.1' %}127.0.0.1:{% endif %}4318:4318"   # OTLP HTTP
 {%- if checkpointer == 'postgres' %}
 
   postgres:
@@ -36,7 +36,7 @@ services:
       POSTGRES_USER: agent
       POSTGRES_PASSWORD: agent
       POSTGRES_DB: agent
-    ports: ["5432:5432"]
+    ports: ["{% if bind_host == '127.0.0.1' %}127.0.0.1:{% endif %}5432:5432"]
     volumes: [pgdata:/var/lib/postgresql]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U agent"]

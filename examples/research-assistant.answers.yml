@@ -10,5 +10,6 @@ enable_devui: true
 enable_auth: false
 python_version: "3.14"
 port: 8000
-include_ci: false
+bind_host: 127.0.0.1
+ci: none
 install_deps: true

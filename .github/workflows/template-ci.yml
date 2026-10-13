@@ -15,13 +15,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { framework: langgraph, checkpointer: memory,   langfuse: true,  devui: true,  auth: false }
-          - { framework: langchain, checkpointer: memory,   langfuse: false, devui: true,  auth: true }
-          - { framework: langgraph, checkpointer: postgres, langfuse: true,  devui: false, auth: false }
-          - { framework: langchain, checkpointer: postgres, langfuse: false, devui: false, auth: true }
+          - { framework: langgraph, checkpointer: memory,   langfuse: true,  devui: true,  auth: false, host: 127.0.0.1, ci: test,      builder: runner }
+          - { framework: langchain, checkpointer: memory,   langfuse: false, devui: true,  auth: true,  host: 0.0.0.0,   ci: dockerhub, builder: runner }
+          - { framework: langgraph, checkpointer: postgres, langfuse: true,  devui: false, auth: false, host: 127.0.0.1, ci: dockerhub, builder: cloud }
+          - { framework: langchain, checkpointer: postgres, langfuse: false, devui: false, auth: true,  host: 0.0.0.0,   ci: none,      builder: runner }
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v10
       - name: Render
         run: |
           git config --global user.email ci@example.com && git config --global user.name ci
@@ -31,7 +31,18 @@ jobs:
             -d checkpointer=${{ matrix.checkpointer }} \
             -d enable_langfuse=${{ matrix.langfuse }} \
             -d enable_devui=${{ matrix.devui }} \
-            -d enable_auth=${{ matrix.auth }}
+            -d enable_auth=${{ matrix.auth }} \
+            -d bind_host=${{ matrix.host }} \
+            -d ci=${{ matrix.ci }} \
+            -d dockerhub_image=ci/agent \
+            -d docker_builder=${{ matrix.builder }} \
+            -d build_cloud_builder=ci/builder
+      - name: Lint generated workflow + compose
+        if: matrix.ci != 'none'
+        working-directory: /tmp/agent
+        run: |
+          uvx --from actionlint-py actionlint .github/workflows/ci.yml
+          cp .env.example .env && docker compose config -q
       - name: Lint + test
         working-directory: /tmp/agent
         run: |
@@ -46,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v10
       - working-directory: examples/research-assistant
         run: |
           uv sync --locked

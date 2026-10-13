@@ -74,7 +74,7 @@ async with Client("http://localhost:8000/mcp") as client:
 
 ```bash
 make build                       # docker build -t research-assistant:latest .
-docker run --env-file .env -p 8000:8000 research-assistant:latest
+docker run --env-file .env -p 127.0.0.1:8000:8000 research-assistant:latest
 ```
 
 The image runs as a non-root user, has a `HEALTHCHECK` on `/healthz`, and the dev UI is off (`DEV_UI_ENABLED=false`).
