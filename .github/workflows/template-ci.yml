@@ -21,7 +21,7 @@ jobs:
           - { framework: langchain, checkpointer: postgres, langfuse: false, devui: false, auth: true,  host: 0.0.0.0,   ci: none,      builder: runner }
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.0
       - name: Render
         run: |
           git config --global user.email ci@example.com && git config --global user.name ci
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.0
       - working-directory: examples/research-assistant
         run: |
           uv sync --locked
