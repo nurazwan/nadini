@@ -144,7 +144,7 @@ build_cloud_builder:
   type: str
   help: Docker Build Cloud builder (ORG/NAME, see Docker Hub -> Build Cloud)
   when: "{{ ci == 'dockerhub' and docker_builder == 'cloud' }}"
-  default: ""
+  default: "{{ dockerhub_image.split('/')[0] }}/default"
   validator: >-
     {% if not (build_cloud_builder | regex_search('^[^/\\s]+/[^/\\s]+$')) %}
     Use the form ORG/NAME

@@ -53,6 +53,27 @@ jobs:
         working-directory: /tmp/agent
         run: docker build -t ci-agent .
 
+  defaults:
+    # Render with only the branch-selecting answers, so every other question
+    # falls back to its default. Copier validates defaults too, so a default
+    # that fails its own validator breaks the interactive prompt.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { ci: none,      builder: runner }
+          - { ci: test,      builder: runner }
+          - { ci: dockerhub, builder: runner }
+          - { ci: dockerhub, builder: cloud }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+      - run: |
+          git config --global user.email ci@example.com && git config --global user.name ci
+          uvx copier copy --trust --defaults --vcs-ref HEAD . /tmp/agent \
+            -d ci=${{ matrix.ci }} -d docker_builder=${{ matrix.builder }} -d install_deps=false
+
   example:
     runs-on: ubuntu-latest
     steps:
