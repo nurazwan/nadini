@@ -40,7 +40,7 @@ Network access is needed at generation time, because dependency versions are res
 ## 2. Generate a project
 
 ```bash
-uvx copier copy --trust gh:<you>/nadini my-agent
+uvx copier copy --trust gh:nurazwan/nadini my-agent
 # or from a local checkout:
 uvx copier copy --trust ./nadini my-agent
 ```

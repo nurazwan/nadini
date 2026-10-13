@@ -26,6 +26,7 @@ All three entry points (A2A, MCP, dev UI) call **one** function contract in `age
 - [Troubleshooting](#troubleshooting)
 - [Developing the template](#developing-the-template)
 - [Why the name](#why-the-name)
+- [License](#license)
 
 ## Features
 
@@ -48,7 +49,7 @@ All three entry points (A2A, MCP, dev UI) call **one** function contract in `age
 Prerequisites: [uv](https://docs.astral.sh/uv/), Docker (optional, for images and the Grafana stack), and an OpenAI API key or any OpenAI-compatible endpoint. Generation needs network access, because dependency versions are resolved then.
 
 ```bash
-uvx copier copy --trust gh:<you>/nadini my-agent   # answer the questions
+uvx copier copy --trust gh:nurazwan/nadini my-agent   # answer the questions
 cd my-agent
 cp .env.example .env                                # set OPENAI_API_KEY and LLM_MODEL
 make dev                                            # → http://localhost:8000/dev-ui
@@ -59,11 +60,11 @@ make dev                                            # → http://localhost:8000/
 Non-interactive, for scripts and CI:
 
 ```bash
-uvx copier copy --trust --defaults gh:<you>/nadini my-agent \
+uvx copier copy --trust --defaults gh:nurazwan/nadini my-agent \
   -d project_name="Support Bot" -d framework=langchain -d bind_host=0.0.0.0 \
   -d ci=dockerhub -d dockerhub_image=me/support-bot
 # or keep the answers in a file:
-uvx copier copy --trust --data-file answers.yml gh:<you>/nadini my-agent
+uvx copier copy --trust --data-file answers.yml gh:nurazwan/nadini my-agent
 ```
 
 ## Generation questions
@@ -245,6 +246,10 @@ That is the template's whole job: making your agent *callable*.
 - You call it from the **dev UI**.
 
 One agent answers on every line.
+
+## License
+
+[MIT](LICENSE). Projects you generate with Nadini are yours to license however you like.
 
 ---
 
