@@ -19,7 +19,8 @@ make test
 | --- | --- | --- |
 | `agent/main.py` | The contract: `message`, `stream_message`, `stream_events`, `lifespan` | Keep the signatures |
 | `agent/{{ 'graph.py' if framework == 'langgraph' else 'chain.py' }}` | {{ 'The StateGraph (nodes, edges, state)' if framework == 'langgraph' else '`create_agent(...)` - model, tools, middleware' }} | Yes |
-| `agent/tools.py` | Tools (add to `TOOLS`) | Yes |
+{% if framework == 'langgraph' %}| `agent/builder.py` | Compiles `graph` from `graph.py` with the checkpointer | Rarely |
+{% endif %}| `agent/tools.py` | Tools (add to `TOOLS`) | Yes |
 | `agent/prompts.py` | System prompt | Yes |
 | `agent/llm.py` | Chat model factory (OpenAI / OpenAI-compatible) | Yes |
 | `agent/memory.py` | Conversation memory ({{ 'PostgreSQL' if checkpointer == 'postgres' else 'in-memory' }} checkpointer) | Rarely |

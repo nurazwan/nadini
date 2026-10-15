@@ -19,6 +19,7 @@ make test
 | --- | --- | --- |
 | `agent/main.py` | The contract: `message`, `stream_message`, `stream_events`, `lifespan` | Keep the signatures |
 | `agent/graph.py` | The StateGraph (nodes, edges, state) | Yes |
+| `agent/builder.py` | Compiles `graph` from `graph.py` with the checkpointer | Rarely |
 | `agent/tools.py` | Tools (add to `TOOLS`) | Yes |
 | `agent/prompts.py` | System prompt | Yes |
 | `agent/llm.py` | Chat model factory (OpenAI / OpenAI-compatible) | Yes |

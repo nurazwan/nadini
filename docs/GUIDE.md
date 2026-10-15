@@ -94,6 +94,7 @@ my-agent/
 ├── agent/                  ← YOUR CODE
 │   ├── main.py             the contract (see below) — keep the signatures
 │   ├── graph.py | chain.py the agent itself (LangGraph or LangChain)
+│   ├── builder.py          compiles graph.py (LangGraph only)
 │   ├── tools.py            tools; append to TOOLS
 │   ├── prompts.py          system prompt
 │   ├── llm.py              chat-model factory
@@ -162,7 +163,7 @@ Edit `SYSTEM_PROMPT` in `agent/prompts.py`.
 
 ### Change or add graph logic (LangGraph)
 
-`agent/graph.py` is a normal `StateGraph`. Add fields to `State`, then add nodes and edges:
+`agent/graph.py` is a normal, uncompiled `StateGraph` at module level, and it's yours to edit. `agent/builder.py` compiles it with the checkpointer when the server starts, and `agent/main.py` runs it on each request. Add fields to `State`, then add nodes and edges:
 
 ```python
 class State(MessagesState):

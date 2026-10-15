@@ -96,6 +96,7 @@ my-agent/
 ├── agent/                  ← YOUR CODE
 │   ├── main.py             the contract: message() / stream_events() — keep the signatures
 │   ├── graph.py | chain.py the agent itself (LangGraph or LangChain)
+│   ├── builder.py          compiles graph.py (LangGraph only)
 │   ├── tools.py            tools; append to TOOLS
 │   ├── prompts.py          system prompt
 │   ├── llm.py              chat-model factory

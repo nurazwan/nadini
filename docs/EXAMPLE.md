@@ -85,12 +85,13 @@ class State(MessagesState):
     tool_rounds: int                         # visible in the dev UI "State" tab
 
 async def call_model(state: State, config):
+    base_model = llm.get_llm()
     rounds = state.get("tool_rounds", 0)
     if rounds >= MAX_TOOL_ROUNDS:            # budget spent → answer without tools
         response = await base_model.ainvoke(messages, config)
         # drop stray tool calls (some models emit them even unbound) so the turn ends
         return {"messages": [AIMessage(content=response.text, id=response.id)], "tool_rounds": 0}
-    response = await model.ainvoke(messages, config)
+    response = await base_model.bind_tools(TOOLS).ainvoke(messages, config)
     return {"messages": [response], "tool_rounds": rounds + 1 if response.tool_calls else 0}
 
 graph.add_conditional_edges("agent", route)  # was: tools_condition

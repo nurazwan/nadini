@@ -23,8 +23,8 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph.state import CompiledStateGraph
 
+from agent.builder import build_agent
 from agent.events import AgentEvent, convert, make_event, to_jsonable
-from agent.graph import build_agent
 from agent.memory import open_checkpointer
 from agent.settings import get_settings
 

@@ -1,13 +1,18 @@
-"""LangGraph agent: an explicit StateGraph you can extend with your own nodes/edges.
+"""LangGraph agent: an explicit StateGraph. This file is yours - edit it freely.
 
 Flow: START -> agent --(tool calls?)--> tools -> agent ... -> END
+
+Three rules keep it plugged into the server:
+1. Expose a module-level `graph` (an uncompiled StateGraph).
+2. State extends MessagesState: the user's text goes in as `messages`, and the
+   reply is read from the last message.
+3. Don't call `.compile()` here: agent/builder.py compiles `graph` with the
+   checkpointer that gives each conversation its memory.
 """
 
 from langchain_core.messages import SystemMessage
 from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import START, MessagesState, StateGraph
-from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from agent import llm
@@ -19,18 +24,16 @@ class State(MessagesState):
     """Graph state. Add your own fields here (they show up in the dev UI State tab)."""
 
 
-def build_agent(checkpointer: BaseCheckpointSaver | None = None) -> CompiledStateGraph:
+async def call_model(state: State, config: RunnableConfig) -> dict:
     model = llm.get_llm().bind_tools(TOOLS)
+    messages = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
+    response = await model.ainvoke(messages, config)
+    return {"messages": [response]}
 
-    async def call_model(state: State, config: RunnableConfig) -> dict:
-        messages = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
-        response = await model.ainvoke(messages, config)
-        return {"messages": [response]}
 
-    graph = StateGraph(State)
-    graph.add_node("agent", call_model)
-    graph.add_node("tools", ToolNode(TOOLS))
-    graph.add_edge(START, "agent")
-    graph.add_conditional_edges("agent", tools_condition)
-    graph.add_edge("tools", "agent")
-    return graph.compile(checkpointer=checkpointer, name="{{ project_slug }}")
+graph = StateGraph(State)
+graph.add_node("agent", call_model)
+graph.add_node("tools", ToolNode(TOOLS))
+graph.add_edge(START, "agent")
+graph.add_conditional_edges("agent", tools_condition)
+graph.add_edge("tools", "agent")

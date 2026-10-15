@@ -26,11 +26,12 @@ You ran `copier copy` and now have a project. This guide covers every generated 
 | --- | --- | --- | --- |
 | `tools.py` | ✏️ | Functions the LLM can call | Add `@tool` functions and append them to `TOOLS` |
 | `prompts.py` | ✏️ | `SYSTEM_PROMPT` | Rewrite the persona, rules and output format |
-| `graph.py` (LangGraph) | ✏️ | An explicit `StateGraph`: `agent ⇄ tools` | Add state fields, nodes, edges, routing |
+| `graph.py` (LangGraph) | ✏️ | An explicit, uncompiled `StateGraph`: `agent ⇄ tools` | Add state fields, nodes, edges, routing |
 | `chain.py` (LangChain) | ✏️ | `create_agent(model, TOOLS, ...)` | Add `middleware=[...]` or `response_format=` |
 | `llm.py` | ✏️ | Builds the chat model | Switch provider (Anthropic, Gemini, ...) or add model options |
 | `settings.py` | ✏️ | Agent config from env / `.env` | Add your own settings (API keys, limits) |
 | `memory.py` | ⚠️ | Opens the conversation store (checkpointer) | Swap the backend, e.g. SQLite. Must yield a LangGraph checkpointer |
+| `builder.py` (LangGraph) | 🔒 | Compiles `graph` from `graph.py` with the checkpointer | Nothing, usually |
 | `main.py` | ⚠️ | The contract + dev UI helpers | Change the input you send to the agent, or what counts as the final answer. Keep the signatures |
 | `events.py` | ⚠️ | Translates raw LangChain events into `AgentEvent`s | Add new event types ([see below](#what-agentevents.py-is-for)) |
 
@@ -143,7 +144,7 @@ script_llm(tool_call("lookup_order", {"order_id": "42"}), "Order 42 has shipped.
 Edit `SYSTEM_PROMPT` in `agent/prompts.py`. For a prompt that changes per turn (e.g. today's date), build it in the model node instead:
 
 ```python
-# agent/graph.py, inside build_agent()
+# agent/graph.py
 async def call_model(state: State, config: RunnableConfig) -> dict:
     prompt = SYSTEM_PROMPT + f"\nToday is {date.today():%A %d %B %Y}."
     messages = [SystemMessage(prompt), *state["messages"]]
@@ -165,6 +166,8 @@ graph.add_node("review", review)
 graph.add_conditional_edges("agent", route)    # replace tools_condition with your own router
 graph.add_edge("review", END)
 ```
+
+`graph.py` is plain LangGraph: restructure it however you like, as long as it keeps a module-level `graph`, a state that extends `MessagesState`, and no `.compile()` call (`builder.py` compiles it with the checkpointer that gives each conversation its memory).
 
 The dev UI Graph tab redraws from the compiled graph, so you can check the wiring there. [`EXAMPLE.md`](EXAMPLE.md) walks through a full tool-budget guard.
 
