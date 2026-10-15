@@ -218,6 +218,8 @@ If `AUTH_TOKEN` is set, paste it into the box at the bottom-left of the UI.
 
 ### A2A (Agent2Agent, spec 1.0, JSON-RPC)
 
+To change the agent card or what callers receive, see [Customising A2A](A2A.md).
+
 Discover the agent:
 
 ```bash
@@ -373,7 +375,7 @@ Set these in production:
 - `OTEL_EXPORTER_OTLP_ENDPOINT`
 - `checkpointer=postgres` if you run more than one replica. In-memory memory isn't shared across pods.
 
-A2A task state uses an in-memory task store. For multi-replica deployments, either use sticky sessions or swap in `a2a-sdk`'s `DatabaseTaskStore`.
+A2A task state uses an in-memory task store. For multi-replica deployments, either use sticky sessions or swap in `a2a-sdk`'s `DatabaseTaskStore` ([how](A2A.md#task-storage)).
 
 ### Publish to Docker Hub from CI
 

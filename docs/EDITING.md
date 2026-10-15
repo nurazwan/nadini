@@ -4,7 +4,7 @@ You ran `copier copy` and now have a project. This guide covers every generated 
 
 - [The three rules](#the-three-rules)
 - [File by file](#file-by-file)
-- [What `agent/events.py` is for](#what-agentevents.py-is-for)
+- [What `agent/events.py` is for](#what-agenteventspy-is-for)
 - [Recipes](#recipes)
 - [Changing a generation answer later](#changing-a-generation-answer-later)
 - [Pulling template updates](#pulling-template-updates)
@@ -33,14 +33,14 @@ You ran `copier copy` and now have a project. This guide covers every generated 
 | `memory.py` | ⚠️ | Opens the conversation store (checkpointer) | Swap the backend, e.g. SQLite. Must yield a LangGraph checkpointer |
 | `builder.py` (LangGraph) | 🔒 | Compiles `graph` from `graph.py` with the checkpointer | Nothing, usually |
 | `main.py` | ⚠️ | The contract + dev UI helpers | Change the input you send to the agent, or what counts as the final answer. Keep the signatures |
-| `events.py` | ⚠️ | Translates raw LangChain events into `AgentEvent`s | Add new event types ([see below](#what-agentevents.py-is-for)) |
+| `events.py` | ⚠️ | Translates raw LangChain events into `AgentEvent`s | Add new event types ([see below](#what-agenteventspy-is-for)) |
 
 ### `server/` (plumbing)
 
 | File | | What it is | When you'd edit it |
 | --- | --- | --- | --- |
 | `config.py` | ⚠️ | Server settings (host, port, public URL, auth, dev UI, OTel) | Add a server-level setting |
-| `a2a_app.py` | ⚠️ | A2A executor and agent card | Advertise more skills in the card, or stream extra event types to A2A clients |
+| `a2a_app.py` | ⚠️ | A2A executor and agent card | Advertise skills, change what callers receive, allow cancelling. See [A2A.md](A2A.md) |
 | `mcp_app.py` | ⚠️ | MCP server with the `message` tool | Expose more MCP tools or resources |
 | `app.py` | ⚠️ | Starlette app: routes, middleware, startup | Add an HTTP route (e.g. a webhook) |
 | `auth.py` | 🔒 | Bearer-token middleware | Swap in another auth scheme (OAuth, API gateway headers) |
@@ -244,9 +244,9 @@ routes = [
 
 Keep A2A last in the list, because it's mounted at `/`. The bearer-token middleware covers new routes too.
 
-### Advertise more A2A skills
+### Customise A2A (agent card, replies, cancel, task storage)
 
-Skills in the agent card are descriptions for other agents; they don't change behaviour. Add `AgentSkill(...)` entries in `build_agent_card()` in `server/a2a_app.py`, so callers know what to ask for.
+See [A2A.md](A2A.md).
 
 ## Changing a generation answer later
 

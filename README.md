@@ -14,7 +14,7 @@ Nadini is an interactive [Copier](https://copier.readthedocs.io) template for AI
 
 All three entry points (A2A, MCP, dev UI) call **one** function contract in `agent/main.py`, so they always behave the same.
 
-📖 **[Usage guide](docs/GUIDE.md)** · ✏️ **[Editing a generated project](docs/EDITING.md)** · 🧪 **[Worked example: Research Assistant](docs/EXAMPLE.md)**
+📖 **[Usage guide](docs/GUIDE.md)** · ✏️ **[Editing a generated project](docs/EDITING.md)** · 🔌 **[Customising A2A](docs/A2A.md)** · 🧪 **[Worked example: Research Assistant](docs/EXAMPLE.md)**
 
 - [Features](#features)
 - [Quick start](#quick-start)
@@ -218,7 +218,7 @@ The full table is in the [guide](docs/GUIDE.md#10-troubleshooting).
 ```
 copier.yml            questions + post-generation tasks
 template/             the project skeleton (rendered with Jinja)
-docs/                 GUIDE.md, EXAMPLE.md, screenshots
+docs/                 GUIDE.md, EDITING.md, A2A.md, EXAMPLE.md, screenshots
 examples/             research-assistant (generated + customised) and its answers file
 .github/workflows/    template CI
 ```
